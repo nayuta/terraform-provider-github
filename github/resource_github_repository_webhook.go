@@ -86,19 +86,7 @@ func resourceGithubRepositoryWebhookObject(d *schema.ResourceData) *github.Hook 
 
 	config := d.Get("configuration").([]interface{})
 	if len(config) > 0 {
-		configMap := config[0].(map[string]interface{})
-		hook.Config = &github.HookConfig{
-			ContentType: github.String(configMap["content_type"].(string)),
-			InsecureSSL: func() *string {
-				if configMap["insecure_ssl"].(bool) {
-					return github.String("1")
-				} else {
-					return github.String("0")
-				}
-			}(),
-			URL:    github.String(configMap["url"].(string)),
-			Secret: github.String(configMap["secret"].(string)),
-		}
+		hook.Config = webhookConfigurationSchemaElemToObject(config)
 	}
 
 	return hook
@@ -125,7 +113,8 @@ func resourceGithubRepositoryWebhookCreate(d *schema.ResourceData, meta interfac
 		hook.Config.Secret = hk.Config.Secret
 	}
 
-	if err = d.Set("configuration", []interface{}{hook.Config}); err != nil {
+	config := webhookConfigurationObjectToSchemaElem(hook.Config)
+	if err = d.Set("configuration", config); err != nil {
 		return err
 	}
 
@@ -183,7 +172,8 @@ func resourceGithubRepositoryWebhookRead(d *schema.ResourceData, meta interface{
 		}
 	}
 
-	if err = d.Set("configuration", []interface{}{hook.Config}); err != nil {
+	config := webhookConfigurationObjectToSchemaElem(hook.Config)
+	if err = d.Set("configuration", config); err != nil {
 		return err
 	}
 
@@ -223,4 +213,36 @@ func resourceGithubRepositoryWebhookDelete(d *schema.ResourceData, meta interfac
 
 	_, err = client.Repositories.DeleteHook(ctx, owner, repoName, hookID)
 	return err
+}
+
+func webhookConfigurationObjectToSchemaElem(hookConfig *github.HookConfig) []interface{} {
+	configuration := []interface{}{
+		map[string]interface{}{
+			"url":          hookConfig.URL,
+			"content_type": hookConfig.ContentType,
+			"insecure_ssl": func() bool {
+				return *hookConfig.InsecureSSL == "1"
+			}(),
+			"secret": hookConfig.Secret,
+		},
+	}
+
+	return configuration
+}
+
+func webhookConfigurationSchemaElemToObject(hookConfigSchemaElem []interface{}) *github.HookConfig {
+	configuration := &github.HookConfig{
+		URL:         github.String(hookConfigSchemaElem[0].(map[string]interface{})["url"].(string)),
+		ContentType: github.String(hookConfigSchemaElem[0].(map[string]interface{})["content_type"].(string)),
+		Secret:      github.String(hookConfigSchemaElem[0].(map[string]interface{})["secret"].(string)),
+		InsecureSSL: func() *string {
+			if hookConfigSchemaElem[0].(map[string]interface{})["insecure_ssl"].(bool) {
+				return github.String("1")
+			} else {
+				return github.String("0")
+			}
+		}(),
+	}
+
+	return configuration
 }

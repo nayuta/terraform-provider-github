@@ -67,19 +67,7 @@ func resourceGithubOrganizationWebhookObject(d *schema.ResourceData) *github.Hoo
 
 	config := d.Get("configuration").([]interface{})
 	if len(config) > 0 {
-		configMap := config[0].(map[string]interface{})
-		hook.Config = &github.HookConfig{
-			ContentType: github.String(configMap["content_type"].(string)),
-			InsecureSSL: func() *string {
-				if configMap["insecure_ssl"].(bool) {
-					return github.String("1")
-				} else {
-					return github.String("0")
-				}
-			}(),
-			URL:    github.String(configMap["url"].(string)),
-			Secret: github.String(configMap["secret"].(string)),
-		}
+		hook.Config = webhookConfigurationSchemaElemToObject(config)
 	}
 
 	return hook
@@ -110,7 +98,9 @@ func resourceGithubOrganizationWebhookCreate(d *schema.ResourceData, meta interf
 	if hook.Config.Secret != nil {
 		hook.Config.Secret = webhookObj.Config.Secret
 	}
-	if err = d.Set("configuration", []interface{}{hook.Config}); err != nil {
+
+	config := webhookConfigurationObjectToSchemaElem(hook.Config)
+	if err = d.Set("configuration", config); err != nil {
 		return err
 	}
 
@@ -176,7 +166,9 @@ func resourceGithubOrganizationWebhookRead(d *schema.ResourceData, meta interfac
 		}
 	}
 
-	if err = d.Set("configuration", []interface{}{hook.Config}); err != nil {
+	config := webhookConfigurationObjectToSchemaElem(hook.Config)
+
+	if err = d.Set("configuration", config); err != nil {
 		return err
 	}
 
