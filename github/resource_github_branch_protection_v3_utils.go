@@ -50,13 +50,7 @@ func flattenAndSetRequiredStatusChecks(d *schema.ResourceData, protection *githu
 
 		// TODO: Remove once contexts is fully deprecated.
 		// Flatten contexts
-		for _, c := range rsc.Contexts {
-			// Parse into contexts
-			contexts = append(contexts, c)
-		}
-
-		// Flatten checks
-		for _, chk := range rsc.Checks {
+		for _, chk := range *rsc.Checks {
 			// Parse into checks
 			if chk.AppID != nil {
 				checks = append(checks, fmt.Sprintf("%s:%d", chk.Context, *chk.AppID))
@@ -303,7 +297,7 @@ func expandRequiredStatusChecks(d *schema.ResourceData) (*github.RequiredStatusC
 				rscChecks = append(rscChecks, rscCheck)
 			}
 			// Assign after looping both checks and contexts
-			rsc.Checks = rscChecks
+			rsc.Checks = &rscChecks
 		}
 		return rsc, nil
 	}
