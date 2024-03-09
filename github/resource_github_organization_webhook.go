@@ -67,7 +67,7 @@ func resourceGithubOrganizationWebhookObject(d *schema.ResourceData) *github.Hoo
 
 	config := d.Get("configuration").([]interface{})
 	if len(config) > 0 {
-		hook.Config = webhookConfigurationSchemaElemToObject(config)
+		hook.Config = convertWebhookConfigurationElemToObject(config)
 	}
 
 	return hook
@@ -99,7 +99,7 @@ func resourceGithubOrganizationWebhookCreate(d *schema.ResourceData, meta interf
 		hook.Config.Secret = webhookObj.Config.Secret
 	}
 
-	config := webhookConfigurationObjectToSchemaElem(hook.Config)
+	config := convertWebhookConfiguration(hook.Config)
 	if err = d.Set("configuration", config); err != nil {
 		return err
 	}
@@ -166,7 +166,7 @@ func resourceGithubOrganizationWebhookRead(d *schema.ResourceData, meta interfac
 		}
 	}
 
-	config := webhookConfigurationObjectToSchemaElem(hook.Config)
+	config := convertWebhookConfiguration(hook.Config)
 
 	if err = d.Set("configuration", config); err != nil {
 		return err

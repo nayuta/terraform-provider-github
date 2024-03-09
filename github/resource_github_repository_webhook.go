@@ -86,7 +86,7 @@ func resourceGithubRepositoryWebhookObject(d *schema.ResourceData) *github.Hook 
 
 	config := d.Get("configuration").([]interface{})
 	if len(config) > 0 {
-		hook.Config = webhookConfigurationSchemaElemToObject(config)
+		hook.Config = convertWebhookConfigurationElemToObject(config)
 	}
 
 	return hook
@@ -113,7 +113,7 @@ func resourceGithubRepositoryWebhookCreate(d *schema.ResourceData, meta interfac
 		hook.Config.Secret = hk.Config.Secret
 	}
 
-	config := webhookConfigurationObjectToSchemaElem(hook.Config)
+	config := convertWebhookConfigurationObjectToElem(hook.Config)
 	if err = d.Set("configuration", config); err != nil {
 		return err
 	}
@@ -172,7 +172,7 @@ func resourceGithubRepositoryWebhookRead(d *schema.ResourceData, meta interface{
 		}
 	}
 
-	config := webhookConfigurationObjectToSchemaElem(hook.Config)
+	config := convertWebhookConfigurationObjectToElem(hook.Config)
 	if err = d.Set("configuration", config); err != nil {
 		return err
 	}
@@ -215,7 +215,7 @@ func resourceGithubRepositoryWebhookDelete(d *schema.ResourceData, meta interfac
 	return err
 }
 
-func webhookConfigurationObjectToSchemaElem(hookConfig *github.HookConfig) []interface{} {
+func convertWebhookConfigurationObjectToElem(hookConfig *github.HookConfig) []interface{} {
 	configuration := []interface{}{
 		map[string]interface{}{
 			"url":          hookConfig.URL,
@@ -230,7 +230,7 @@ func webhookConfigurationObjectToSchemaElem(hookConfig *github.HookConfig) []int
 	return configuration
 }
 
-func webhookConfigurationSchemaElemToObject(hookConfigSchemaElem []interface{}) *github.HookConfig {
+func convertWebhookConfigurationElemToObject(hookConfigSchemaElem []interface{}) *github.HookConfig {
 	configuration := &github.HookConfig{
 		URL:         github.String(hookConfigSchemaElem[0].(map[string]interface{})["url"].(string)),
 		ContentType: github.String(hookConfigSchemaElem[0].(map[string]interface{})["content_type"].(string)),
